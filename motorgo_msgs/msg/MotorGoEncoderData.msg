@@ -1,0 +1,11 @@
+std_msgs/Header header
+
+float32 motor_1_position
+float32 motor_2_position
+float32 motor_3_position
+float32 motor_4_position
+
+float32 motor_1_velocity
+float32 motor_2_velocity
+float32 motor_3_velocity
+float32 motor_4_velocity
