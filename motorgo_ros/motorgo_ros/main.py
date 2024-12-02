@@ -38,19 +38,29 @@ class MotorGoNode(Node):
         }
 
         for motor in self.motors.keys():
-            self.declare_parameter(f"{motor}/velocity_pid/p", 0.0)
-            self.declare_parameter(f"{motor}/velocity_pid/i", 0.0)
-            self.declare_parameter(f"{motor}/velocity_pid/d", 0.0)
-            self.declare_parameter(f"{motor}/velocity_pid/output_ramp", 10000.0)
-            self.declare_parameter(f"{motor}/velocity_pid/lpf", 0.00001)
+            self.declare_parameters(
+                namespace=motor,
+                parameters=[
+                    ("velocity_pid.p", 0.0),
+                    ("velocity_pid.i", 0.0),
+                    ("velocity_pid.d", 0.0),
+                    ("velocity_pid.output_ramp", 10000.0),
+                    ("velocity_pid.lpf", 0.0001),
+                ],
+            )
 
         # Set velocity PID parameters for each motor
         for name, channel in self.motors.items():
-            p = self.get_parameter(f"{name}/velocity_pid/p").value
-            i = self.get_parameter(f"{name}/velocity_pid/i").value
-            d = self.get_parameter(f"{name}/velocity_pid/d").value
-            output_ramp = self.get_parameter(f"{name}/velocity_pid/output_ramp").value
-            lpf = self.get_parameter(f"{name}/velocity_pid/lpf").value
+            p = self.get_parameter(f"{name}.velocity_pid.p").value
+            i = self.get_parameter(f"{name}.velocity_pid.i").value
+            d = self.get_parameter(f"{name}.velocity_pid.d").value
+            output_ramp = self.get_parameter(f"{name}.velocity_pid.output_ramp").value
+            lpf = self.get_parameter(f"{name}.velocity_pid.lpf").value
+
+            # Print
+            self.get_logger().info(
+                f"Setting PID for {name} to P={p}, I={i}, D={d}, output_ramp={output_ramp}, lpf={lpf}"
+            )
 
             channel.set_velocity_pid_gains(
                 p=p, i=i, d=d, output_ramp=output_ramp, lpf=lpf
@@ -195,9 +205,9 @@ class MotorGoNode(Node):
         # Loop through all parameters and batch updates for each motor
         for param in params:
             try:
-                if param.name.startswith("motor_") and "/velocity_pid/" in param.name:
+                if param.name.startswith("motor_") and ".velocity_pid." in param.name:
                     # Parse the motor name and PID parameter from the parameter name
-                    motor_name, pid_param = param.name.split("/velocity_pid/")
+                    motor_name, pid_param = param.name.split(".velocity_pid.")
                     if motor_name in motor_updates:
                         motor_updates[motor_name][pid_param] = param.value
                     else:
@@ -221,6 +231,7 @@ class MotorGoNode(Node):
                 try:
                     # Apply all updates in one go
                     channel.set_velocity_pid_gains(**updates)
+
                     # Log all changes that are not None
                     for param, value in updates.items():
                         if value is not None:
